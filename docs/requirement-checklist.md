@@ -9,6 +9,18 @@ Status values:
 
 ## Functional Requirements
 
+### List Filtering, Sorting, And Pagination Semantics
+
+- Filters are conjunctive across selected dimensions: `status` AND `role`. Example: selecting `SCHEDULED` and `Enrolled` returns only scheduled topics where the signed-in user is enrolled; if no topic satisfies both conditions, the list must show no results.
+- Status filter means the topic lifecycle state: `OPEN`, `CLAIMED`, `SCHEDULED`, `COMPLETED`, or `CANCELLED`.
+- Role filter is relative to the signed-in user: `Requested by me` means `requester_id` is the current user, `Speaking` means `speaker_id` is the current user, and `Enrolled` means an enrollment row exists for the current user and topic.
+- Sorting never widens the result set; it only orders topics that already passed the selected filters.
+- `Created date` means the topic row's `created_at` timestamp, newest first.
+- `Recommendation count` means the number of rows in `recommendations` for the topic, highest first.
+- `Scheduled date` means the topic row's `scheduled_at` timestamp. In the general Topics list this is soonest first for scheduled topics; topics without a scheduled date are placed after scheduled topics by the database ordering.
+- Dedicated views have fixed filters and sort order: Most Wanted is `OPEN OR CLAIMED` by recommendation count descending, Upcoming is `SCHEDULED` by scheduled date ascending, and Past is `COMPLETED` by scheduled date descending.
+- Pagination is applied after filtering and sorting. Page navigation must preserve the active filters and sort so page 2 is the next slice of the same result set.
+
 | ID | Requirement | Implementation location | Status | Verification notes |
 | --- | --- | --- | --- | --- |
 | FR1 | Users can register with name, email, and password. | `src/app/register/page.tsx`, `src/app/actions.ts::register` | TESTED | Browser signup must be tested with Supabase email confirmation setting. |
@@ -42,12 +54,12 @@ Status values:
 | FR29 | Speaker cannot rate own session. | `src/app/actions.ts::rateTopic`, UI hides rating form | TESTED | Needs speaker completed-session test. |
 | FR30 | Non-enrolled or late-enrolled user cannot rate Completed session. | `rateTopic`, ratings RLS policy | TESTED | Needs direct/manual negative test. |
 | FR31 | Detail displays aggregate rating/count and individual attributed ratings. | `src/lib/data.ts::enrichTopics`, `src/app/topics/[id]/page.tsx` | TESTED | Needs after-rating browser check. |
-| FR32 | Topics list across statuses, filterable by status and role, sortable by created/recommendations/scheduled. | `src/app/topics/page.tsx`, `src/lib/data.ts::listTopics` | TESTED | Needs filters/sorts browser checks. |
-| FR33 | Most Wanted shows Open and Claimed sorted by recommendation count desc. | `src/app/most-wanted/page.tsx`, `listTopics({ mode: "most-wanted" })` | TESTED | Needs multiple recommended topics to verify ordering. |
-| FR34 | Upcoming shows Scheduled sorted by scheduled-at ascending. | `src/app/upcoming/page.tsx`, `listTopics({ mode: "upcoming" })` | TESTED | Needs multiple scheduled sessions. |
-| FR35 | Past shows Completed sorted by scheduled-at descending with aggregate rating. | `src/app/past/page.tsx`, `listTopics({ mode: "past" })` | TESTED | Needs completed sessions with ratings. |
-| FR36 | Dashboard summarizes requested, speaking, enrolled, rated. | `src/app/dashboard/page.tsx`, `src/lib/data.ts::getDashboard` | TESTED | Needs user-specific dashboard verification. |
-| FR37 | Long lists are paginated; filters/sorts apply across paginated set. | `Pagination`, `listTopics`, all list pages | TESTED | Needs enough data to test next/previous and parameter preservation. |
+| FR32 | Topics list shows all statuses by default; selected status and role filters are combined with AND, so a topic appears only when it satisfies every selected filter. Results are sortable by created date, recommendation count, or scheduled date. | `src/app/topics/page.tsx`, `src/lib/data.ts::listTopics` | TESTED | Verify combinations such as `status=SCHEDULED` AND `role=enrolled`; incompatible combinations must return no results. |
+| FR33 | Most Wanted shows only Open and Claimed topics sorted by recommendation count descending across the full filtered set before pagination. | `src/app/most-wanted/page.tsx`, `listTopics({ mode: "most-wanted" })` | TESTED | Needs multiple recommended topics to verify ordering. |
+| FR34 | Upcoming shows only Scheduled sessions sorted by scheduled-at ascending, with the soonest future session first. | `src/app/upcoming/page.tsx`, `listTopics({ mode: "upcoming" })` | TESTED | Needs multiple scheduled sessions. |
+| FR35 | Past shows only Completed sessions sorted by scheduled-at descending, with aggregate rating visible when ratings exist. | `src/app/past/page.tsx`, `listTopics({ mode: "past" })` | TESTED | Needs completed sessions with ratings. |
+| FR36 | Dashboard summarizes the signed-in user's requested topics, speaking sessions, enrolled sessions, and rated sessions. | `src/app/dashboard/page.tsx`, `src/lib/data.ts::getDashboard` | TESTED | Needs user-specific dashboard verification. |
+| FR37 | Long list views are paginated with a default page size of 20; filters apply first, sorting applies to the filtered set, and pagination slices the sorted results while preserving selected query parameters. | `Pagination`, `listTopics`, all list pages | TESTED | Needs enough data to test next/previous and parameter preservation. |
 | FR38 | All data persists across restarts. | Supabase Postgres/Auth | TESTED | Stop/start local app and verify existing data remains. |
 | FR39 | Topic title required and non-whitespace. | `createTopic`, `editTopic`, schema check | TESTED | Needs empty/whitespace browser test. |
 | FR40 | Scheduled-at must be future. | `scheduleTopic` | TESTED | Same as FR19. |

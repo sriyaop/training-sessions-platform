@@ -15,7 +15,7 @@ The project focuses on the required lifecycle and authorization rules over visua
 - Enrollment with duplicate and capacity protection.
 - Lazy completion when `scheduled_at` has passed; no background worker required.
 - Post-session ratings and attributed comments from eligible attendees.
-- Topics list with status/role filters, sorting, and pagination.
+- Topics list with status/role filters, sorting, and pagination. Selected filters combine with AND, then sorting and pagination apply to the matching result set.
 - Most Wanted, Upcoming Sessions, Past Sessions, Topic Detail, and User Dashboard views.
 - Speaker profile pages with completed sessions, average rating, and attendee totals.
 
@@ -147,7 +147,7 @@ docker run --env-file .env.local -p 3000:3000 training-sessions-platform
 - Supabase email confirmation may be disabled during local demo testing for speed.
 - Profile rows mirror Supabase Auth users through a database trigger.
 - Lists refresh on navigation/page load; real-time updates are out of scope.
-- Pagination uses offset pagination with a default page size of 10.
+- Pagination uses offset pagination with a default page size of 20.
 
 ## Tradeoffs
 

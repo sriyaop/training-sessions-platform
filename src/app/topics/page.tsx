@@ -28,6 +28,8 @@ export default async function TopicsPage({
   if (params.status) base.set("status", params.status)
   if (params.sort) base.set("sort", params.sort)
   if (params.role) base.set("role", params.role)
+  const filterSelectClass =
+    "rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground [color-scheme:light] dark:[color-scheme:dark]"
 
   return (
     <PageShell>
@@ -37,24 +39,33 @@ export default async function TopicsPage({
             <h1 className="text-2xl font-semibold">Topics</h1>
             <p className="text-sm text-muted-foreground">Request, recommend, claim, and schedule training sessions.</p>
           </div>
-          <form className="flex flex-wrap gap-2">
-            <select className="rounded-md border px-3 py-2 text-sm" name="status" defaultValue={params.status ?? ""}>
-              <option value="">All statuses</option>
-              {statuses.map((status) => (
-                <option key={status} value={status}>{status}</option>
-              ))}
-            </select>
-            <select className="rounded-md border px-3 py-2 text-sm" name="sort" defaultValue={params.sort ?? "createdAt"}>
-              <option value="createdAt">Created date</option>
-              <option value="recommendations">Recommendations</option>
-              <option value="scheduledAt">Scheduled date</option>
-            </select>
-            <select className="rounded-md border px-3 py-2 text-sm" name="role" defaultValue={params.role ?? ""}>
-              <option value="">All roles</option>
-              <option value="requested">Requested by me</option>
-              <option value="speaking">Speaking</option>
-              <option value="enrolled">Enrolled</option>
-            </select>
+          <form className="flex flex-wrap items-end gap-2 rounded-lg border bg-card p-3">
+            <label className="grid gap-1 text-xs font-medium text-muted-foreground">
+              Status filter
+              <select className={filterSelectClass} name="status" defaultValue={params.status ?? ""}>
+                <option value="">All statuses</option>
+                {statuses.map((status) => (
+                  <option key={status} value={status}>{status}</option>
+                ))}
+              </select>
+            </label>
+            <label className="grid gap-1 text-xs font-medium text-muted-foreground">
+              Role filter
+              <select className={filterSelectClass} name="role" defaultValue={params.role ?? ""}>
+                <option value="">All roles</option>
+                <option value="requested">Requested by me</option>
+                <option value="speaking">Speaking</option>
+                <option value="enrolled">Enrolled</option>
+              </select>
+            </label>
+            <label className="grid gap-1 text-xs font-medium text-muted-foreground">
+              Sort by
+              <select className={filterSelectClass} name="sort" defaultValue={params.sort ?? "createdAt"}>
+                <option value="createdAt">Newest created</option>
+                <option value="recommendations">Most recommendations</option>
+                <option value="scheduledAt">Soonest scheduled</option>
+              </select>
+            </label>
             <Button variant="outline">Apply</Button>
           </form>
           <div className="space-y-3">

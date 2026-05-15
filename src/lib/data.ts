@@ -25,7 +25,7 @@ export async function listTopics({
   status,
   sort = "createdAt",
   page = 1,
-  pageSize = 10,
+  pageSize = 20,
   mode,
   role,
   userId,
