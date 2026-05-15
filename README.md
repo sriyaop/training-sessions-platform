@@ -1,36 +1,88 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Training Sessions Platform
 
-## Getting Started
+Internal training-session platform for requesting learning topics, recommending them, volunteering to teach, scheduling sessions, enrolling, and rating completed sessions.
 
-First, run the development server:
+## Tech Stack
+
+- Next.js 16 App Router, React 19, TypeScript
+- Tailwind CSS 4 and small shadcn-style UI primitives
+- Supabase Auth for login/register
+- Supabase Postgres for relational persistence
+- Server Actions for mutations with server-side authorization checks
+
+This stack keeps the hackathon build small while still giving real auth, relational data, and deployable persistence.
+
+## Setup
+
+1. Install dependencies:
+
+```bash
+npm install
+```
+
+2. Create a Supabase project.
+
+3. Run `supabase-schema.sql` in the Supabase SQL editor.
+
+4. Create `.env.local`:
+
+```bash
+NEXT_PUBLIC_SUPABASE_URL=your-project-url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
+```
+
+5. For the smoothest hackathon demo, disable email confirmation in Supabase Auth settings or confirm users manually.
+
+6. Run the app:
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open `http://localhost:3000`.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Architecture Overview
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+- `src/lib/supabase/server.ts` creates the SSR Supabase client and reads the authenticated user from cookies.
+- `src/lib/data.ts` contains read queries, count enrichment, aggregate rating calculation, and lazy completion of past scheduled sessions.
+- `src/app/actions.ts` contains all lifecycle mutations and validates auth, ownership, status transitions, capacity, enrollment, and rating permissions server-side.
+- `src/app/*/page.tsx` files are simple server-rendered pages with HTML forms calling Server Actions.
+- `supabase-schema.sql` defines tables, relationships, uniqueness constraints, checks, triggers, and RLS policies.
 
-## Learn More
+## Business Rules Covered
 
-To learn more about Next.js, take a look at the following resources:
+- One recommendation, enrollment, and rating per user per topic.
+- Requesters cannot recommend their own topics.
+- Topics can be edited only by the requester while `OPEN`.
+- Only `OPEN` topics can be claimed; speakers can unclaim before scheduling.
+- Only speakers can schedule, and scheduled times must be future dates.
+- Enrollment is only for `SCHEDULED` sessions, blocks the speaker, enforces capacity, and prevents duplicates.
+- Sessions become `COMPLETED` lazily on reads/writes when `scheduled_at` has passed.
+- Only enrolled attendees can rate completed sessions; re-rating updates the existing rating.
+- Requesters can cancel `OPEN` or `CLAIMED`; speakers can cancel `SCHEDULED`; terminal statuses stay terminal.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Assumptions
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+- Supabase email confirmation may be disabled for demo speed.
+- Public profile rows mirror Supabase Auth users.
+- Views are readable to authenticated users; mutations still validate authorization in Server Actions.
+- Pagination is simple offset pagination with a default page size of 10.
 
-## Deploy on Vercel
+## Tradeoffs
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+- No background worker is used; completion is intentionally lazy per the requirements.
+- Aggregate counts are computed with straightforward queries instead of a materialized stats table.
+- UI uses plain forms and server redirects for reliability and speed.
+- RLS is present, but detailed lifecycle enforcement lives in Server Actions to keep hackathon implementation readable.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## AI Usage Disclosure
+
+AI assistance was used to generate and refine the application structure, Server Actions, Supabase schema, lifecycle checks, and README. Human review should still verify Supabase settings and run end-to-end demo flows.
+
+## Future Improvements
+
+- Add optimistic pending states for form submissions.
+- Add admin reporting and CSV export.
+- Add calendar invites for scheduled sessions.
+- Add richer search across topics and speakers.
+- Move aggregate counts into database views if list volume grows.
