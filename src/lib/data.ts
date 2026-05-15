@@ -43,7 +43,7 @@ export async function listTopics({
   let query = supabase.from("topics").select(topicSelect, { count: "exact" })
   const needsComputedSort = sort === "recommendations" || mode === "most-wanted"
 
-  if (mode === "most-wanted") query = query.in("status", ["OPEN", "CLAIMED"])
+  if (mode === "most-wanted") query = query.or("status.eq.OPEN,status.eq.CLAIMED")
   else if (mode === "upcoming") query = query.eq("status", "SCHEDULED")
   else if (mode === "past") query = query.eq("status", "COMPLETED")
   else if (status && statuses.includes(status as TopicStatus)) query = query.eq("status", status)

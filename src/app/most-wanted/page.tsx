@@ -17,7 +17,11 @@ export default async function MostWantedPage({ searchParams }: { searchParams: P
       <p className="text-sm text-muted-foreground">Open and claimed topics sorted by recommendations.</p>
       <div className="mt-4 space-y-3">
         {topics.map((topic) => <TopicCard key={topic.id} topic={topic} />)}
-        {!topics.length ? <p className="rounded-lg border p-4 text-sm text-muted-foreground">No wanted topics yet.</p> : null}
+        {!topics.length ? (
+          <p className="rounded-lg border p-4 text-sm text-muted-foreground">
+            No open or claimed topics yet. Scheduled sessions move to Upcoming.
+          </p>
+        ) : null}
       </div>
       <div className="mt-4"><Pagination page={page} pageSize={pageSize} count={count} base={new URLSearchParams()} /></div>
     </PageShell>
