@@ -34,7 +34,6 @@ export function TopicCard({ topic }: { topic: Topic }) {
         <StatusBadge status={topic.status} />
       </div>
       <div className="mt-3 flex flex-wrap gap-3 text-xs text-muted-foreground">
-        <span>{topic.category}</span>
         <span>{topic.recommendation_count ?? 0} recommendations</span>
         <span>{topic.enrollment_count ?? 0} enrolled</span>
         {topic.scheduled_at ? <span>{new Date(topic.scheduled_at).toLocaleString()}</span> : null}

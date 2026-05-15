@@ -5,14 +5,6 @@ export type TopicStatus =
   | "COMPLETED"
   | "CANCELLED"
 
-export type TopicCategory =
-  | "Engineering"
-  | "Product"
-  | "Design"
-  | "Data"
-  | "Leadership"
-  | "Process"
-
 export type Profile = {
   id: string
   email: string
@@ -23,7 +15,6 @@ export type Topic = {
   id: string
   title: string
   description: string
-  category: TopicCategory
   requester_id: string
   speaker_id: string | null
   status: TopicStatus

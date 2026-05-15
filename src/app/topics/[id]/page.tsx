@@ -12,7 +12,7 @@ import {
 import { PageShell } from "@/components/page-shell"
 import { ErrorMessage, StatusBadge } from "@/components/ui"
 import { Button } from "@/components/ui/button"
-import { categories, getTopic } from "@/lib/data"
+import { getTopic } from "@/lib/data"
 import { getUser } from "@/lib/supabase/server"
 import Link from "next/link"
 import { redirect } from "next/navigation"
@@ -75,7 +75,6 @@ export default async function TopicDetailPage({
                 )}
               </dd>
             </div>
-            <Info label="Category" value={topic.category} />
             <Info label="Recommendations" value={String(topic.recommendation_count ?? 0)} />
             <Info label="Enrollment" value={`${topic.enrollment_count ?? 0}${topic.capacity ? ` / ${topic.capacity}` : ""}`} />
             <Info label="Scheduled" value={topic.scheduled_at ? new Date(topic.scheduled_at).toLocaleString() : "Not scheduled"} />
@@ -134,11 +133,6 @@ export default async function TopicDetailPage({
               <form action={editTopic} className="mt-3 space-y-3">
                 <input type="hidden" name="topicId" value={topic.id} />
                 <input className="w-full rounded-md border px-3 py-2 text-sm" name="title" defaultValue={topic.title} required />
-                <select className="w-full rounded-md border px-3 py-2 text-sm" name="category" defaultValue={topic.category}>
-                  {categories.map((category) => (
-                    <option key={category} value={category}>{category}</option>
-                  ))}
-                </select>
                 <textarea className="min-h-28 w-full rounded-md border px-3 py-2 text-sm" name="description" defaultValue={topic.description} />
                 <Button>Save changes</Button>
               </form>

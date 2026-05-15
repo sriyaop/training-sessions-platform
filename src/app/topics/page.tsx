@@ -2,14 +2,14 @@ import { createTopic } from "@/app/actions"
 import { PageShell } from "@/components/page-shell"
 import { ErrorMessage, Pagination, TopicCard } from "@/components/ui"
 import { Button } from "@/components/ui/button"
-import { categories, listTopics, statuses } from "@/lib/data"
+import { listTopics, statuses } from "@/lib/data"
 import { getUser } from "@/lib/supabase/server"
 import { redirect } from "next/navigation"
 
 export default async function TopicsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ status?: string; sort?: string; role?: string; category?: string; page?: string; error?: string }>
+  searchParams: Promise<{ status?: string; sort?: string; role?: string; page?: string; error?: string }>
 }) {
   const params = await searchParams
   const page = Math.max(1, Number(params.page ?? 1))
@@ -21,7 +21,6 @@ export default async function TopicsPage({
     role: ["requested", "speaking", "enrolled"].includes(params.role ?? "")
       ? (params.role as "requested" | "speaking" | "enrolled")
       : undefined,
-    category: params.category,
     page,
     userId: user.id,
   })
@@ -29,7 +28,6 @@ export default async function TopicsPage({
   if (params.status) base.set("status", params.status)
   if (params.sort) base.set("sort", params.sort)
   if (params.role) base.set("role", params.role)
-  if (params.category) base.set("category", params.category)
 
   return (
     <PageShell>
@@ -57,12 +55,6 @@ export default async function TopicsPage({
               <option value="speaking">Speaking</option>
               <option value="enrolled">Enrolled</option>
             </select>
-            <select className="rounded-md border px-3 py-2 text-sm" name="category" defaultValue={params.category ?? ""}>
-              <option value="">All categories</option>
-              {categories.map((category) => (
-                <option key={category} value={category}>{category}</option>
-              ))}
-            </select>
             <Button variant="outline">Apply</Button>
           </form>
           <div className="space-y-3">
@@ -77,11 +69,6 @@ export default async function TopicsPage({
           <form action={createTopic} className="mt-3 space-y-3">
             <ErrorMessage message={params.error} />
             <input className="w-full rounded-md border px-3 py-2 text-sm" name="title" placeholder="Title" required />
-            <select className="w-full rounded-md border px-3 py-2 text-sm" name="category" defaultValue="Engineering">
-              {categories.map((category) => (
-                <option key={category} value={category}>{category}</option>
-              ))}
-            </select>
             <textarea className="min-h-28 w-full rounded-md border px-3 py-2 text-sm" name="description" placeholder="Description" />
             <Button className="w-full">Create topic</Button>
           </form>

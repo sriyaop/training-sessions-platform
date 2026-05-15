@@ -1,7 +1,6 @@
 create extension if not exists pgcrypto;
 
 create type topic_status as enum ('OPEN', 'CLAIMED', 'SCHEDULED', 'COMPLETED', 'CANCELLED');
-create type topic_category as enum ('Engineering', 'Product', 'Design', 'Data', 'Leadership', 'Process');
 
 create table public.profiles (
   id uuid primary key references auth.users(id) on delete cascade,
@@ -14,7 +13,6 @@ create table public.topics (
   id uuid primary key default gen_random_uuid(),
   title text not null check (length(trim(title)) > 0),
   description text not null default '',
-  category topic_category not null default 'Engineering',
   requester_id uuid not null references public.profiles(id) on delete cascade,
   speaker_id uuid references public.profiles(id) on delete set null,
   status topic_status not null default 'OPEN',

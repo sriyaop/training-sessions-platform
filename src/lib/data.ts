@@ -1,5 +1,5 @@
 import { createClient } from "@/lib/supabase/server"
-import type { Enrollment, Profile, Rating, Topic, TopicCategory, TopicStatus } from "@/lib/types"
+import type { Enrollment, Profile, Rating, Topic, TopicStatus } from "@/lib/types"
 
 const topicSelect =
   "*, requester:profiles!topics_requester_id_fkey(id,email,display_name), speaker:profiles!topics_speaker_id_fkey(id,email,display_name)"
@@ -10,15 +10,6 @@ export const statuses: TopicStatus[] = [
   "SCHEDULED",
   "COMPLETED",
   "CANCELLED",
-]
-
-export const categories: TopicCategory[] = [
-  "Engineering",
-  "Product",
-  "Design",
-  "Data",
-  "Leadership",
-  "Process",
 ]
 
 export async function completePastSessions() {
@@ -37,7 +28,6 @@ export async function listTopics({
   pageSize = 10,
   mode,
   role,
-  category,
   userId,
 }: {
   status?: string
@@ -46,7 +36,6 @@ export async function listTopics({
   pageSize?: number
   mode?: "most-wanted" | "upcoming" | "past"
   role?: "requested" | "speaking" | "enrolled"
-  category?: string
   userId?: string
 }) {
   await completePastSessions()
@@ -58,8 +47,6 @@ export async function listTopics({
   else if (mode === "upcoming") query = query.eq("status", "SCHEDULED")
   else if (mode === "past") query = query.eq("status", "COMPLETED")
   else if (status && statuses.includes(status as TopicStatus)) query = query.eq("status", status)
-
-  if (category && categories.includes(category as TopicCategory)) query = query.eq("category", category)
 
   if (role === "requested" && userId) query = query.eq("requester_id", userId)
   if (role === "speaking" && userId) query = query.eq("speaker_id", userId)

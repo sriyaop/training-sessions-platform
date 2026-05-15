@@ -103,7 +103,6 @@ Status values:
 
 | Item | Optional enhancement | Implementation location | Status | Verification notes |
 | --- | --- | --- | --- | --- |
-| Categories | Small predefined list of topic categories. | `topics.category`, `src/lib/data.ts::categories`, topic forms/list filter | PASS | Requires `supabase-optional-polish-categories.sql` for existing Supabase projects. |
 | Speaker profile | Speaker profile showing sessions, average rating, and attendee count. | `src/app/speakers/[id]/page.tsx` | PASS | Linked from topic detail speaker name. |
 | Containerization | Dockerfile for optional containerized local run. | `Dockerfile`, `.dockerignore`, README Docker section | PASS | Local Node setup remains primary path. |
 

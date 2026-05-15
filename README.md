@@ -17,7 +17,6 @@ The project focuses on the required lifecycle and authorization rules over visua
 - Post-session ratings and attributed comments from eligible attendees.
 - Topics list with status/role filters, sorting, and pagination.
 - Most Wanted, Upcoming Sessions, Past Sessions, Topic Detail, and User Dashboard views.
-- Optional category tags for topic browsing.
 - Speaker profile pages with completed sessions, average rating, and attendee totals.
 
 ## Tech Stack And Rationale
