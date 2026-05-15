@@ -234,7 +234,9 @@ export async function enroll(formData: FormData) {
     .select("id", { count: "exact", head: true })
     .eq("topic_id", id)
 
-  if (topic.capacity && (count ?? 0) >= topic.capacity) fail(path, "This session is at capacity.")
+  if (topic.capacity && (count ?? 0) >= topic.capacity) {
+    fail(path, `This session is at capacity of ${topic.capacity} participants.`)
+  }
 
   const { error } = await supabase.from("enrollments").insert({ topic_id: id, user_id: user.id })
   if (error) fail(path, error.code === "23505" ? "You are already enrolled." : error.message)
