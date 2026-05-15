@@ -44,7 +44,16 @@ export async function register(formData: FormData) {
     options: { data: { display_name: displayName || email } },
   })
 
-  if (error) fail("/register", error.message.includes("already") ? "Email is already registered." : error.message)
+  if (error) {
+    const message = error.message.toLowerCase()
+    if (message.includes("rate limit")) {
+      fail(
+        "/register",
+        "Supabase email rate limit exceeded. Disable email confirmation for local testing or wait before trying again."
+      )
+    }
+    fail("/register", message.includes("already") ? "Email is already registered." : error.message)
+  }
 
   if (data.user) {
     await supabase.from("profiles").upsert({
@@ -234,7 +243,9 @@ export async function enroll(formData: FormData) {
     .select("id", { count: "exact", head: true })
     .eq("topic_id", id)
 
-  if (topic.capacity && (count ?? 0) >= topic.capacity) fail(path, "This session is at capacity.")
+  if (topic.capacity && (count ?? 0) >= topic.capacity) {
+    fail(path, `This session is at capacity of ${topic.capacity} participants.`)
+  }
 
   const { error } = await supabase.from("enrollments").insert({ topic_id: id, user_id: user.id })
   if (error) fail(path, error.code === "23505" ? "You are already enrolled." : error.message)

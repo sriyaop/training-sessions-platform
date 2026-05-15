@@ -110,9 +110,29 @@ for select to authenticated using (true);
 create policy "Authenticated users create own topics" on public.topics
 for insert to authenticated with check (auth.uid() = requester_id and status = 'OPEN');
 
-create policy "Requesters and speakers update allowed topics" on public.topics
-for update to authenticated using (auth.uid() = requester_id or auth.uid() = speaker_id)
-with check (auth.uid() = requester_id or auth.uid() = speaker_id);
+create policy "Requesters can edit open topics" on public.topics
+for update to authenticated using (auth.uid() = requester_id and status = 'OPEN')
+with check (auth.uid() = requester_id and status = 'OPEN');
+
+create policy "Requesters can cancel active topics" on public.topics
+for update to authenticated using (auth.uid() = requester_id and status in ('OPEN', 'CLAIMED', 'SCHEDULED'))
+with check (auth.uid() = requester_id and status = 'CANCELLED');
+
+create policy "Speakers can unclaim claimed topics" on public.topics
+for update to authenticated using (auth.uid() = speaker_id and status = 'CLAIMED')
+with check (speaker_id is null and status = 'OPEN');
+
+create policy "Speakers can schedule claimed topics" on public.topics
+for update to authenticated using (auth.uid() = speaker_id and status = 'CLAIMED')
+with check (auth.uid() = speaker_id and status = 'SCHEDULED');
+
+create policy "Speakers can update scheduled topics" on public.topics
+for update to authenticated using (auth.uid() = speaker_id and status = 'SCHEDULED')
+with check (auth.uid() = speaker_id and status = 'SCHEDULED');
+
+create policy "Speakers can cancel scheduled topics" on public.topics
+for update to authenticated using (auth.uid() = speaker_id and status = 'SCHEDULED')
+with check (auth.uid() = speaker_id and status = 'CANCELLED');
 
 create policy "Authenticated users can claim open topics" on public.topics
 for update to authenticated using (status = 'OPEN' and speaker_id is null)
@@ -125,8 +145,16 @@ with check (status = 'COMPLETED');
 create policy "Recommendations readable" on public.recommendations
 for select to authenticated using (true);
 
-create policy "Users create own recommendations" on public.recommendations
-for insert to authenticated with check (auth.uid() = user_id);
+create policy "Users create own recommendations for open demand" on public.recommendations
+for insert to authenticated with check (
+  auth.uid() = user_id
+  and exists (
+    select 1 from public.topics
+    where topics.id = topic_id
+      and topics.status in ('OPEN', 'CLAIMED')
+      and topics.requester_id <> auth.uid()
+  )
+);
 
 create policy "Users delete own recommendations" on public.recommendations
 for delete to authenticated using (auth.uid() = user_id);
@@ -134,17 +162,60 @@ for delete to authenticated using (auth.uid() = user_id);
 create policy "Enrollments readable" on public.enrollments
 for select to authenticated using (true);
 
-create policy "Users create own enrollments" on public.enrollments
-for insert to authenticated with check (auth.uid() = user_id);
+create policy "Users create own scheduled enrollments" on public.enrollments
+for insert to authenticated with check (
+  auth.uid() = user_id
+  and exists (
+    select 1 from public.topics
+    where topics.id = topic_id
+      and topics.status = 'SCHEDULED'
+      and topics.speaker_id <> auth.uid()
+  )
+);
 
-create policy "Users delete own enrollments" on public.enrollments
-for delete to authenticated using (auth.uid() = user_id);
+create policy "Users delete own future enrollments" on public.enrollments
+for delete to authenticated using (
+  auth.uid() = user_id
+  and exists (
+    select 1 from public.topics
+    where topics.id = topic_id
+      and topics.status = 'SCHEDULED'
+      and topics.scheduled_at > now()
+  )
+);
 
 create policy "Ratings readable" on public.ratings
 for select to authenticated using (true);
 
-create policy "Users create own ratings" on public.ratings
-for insert to authenticated with check (auth.uid() = user_id);
+create policy "Users create own eligible ratings" on public.ratings
+for insert to authenticated with check (
+  auth.uid() = user_id
+  and exists (
+    select 1
+    from public.topics
+    join public.enrollments
+      on enrollments.topic_id = topics.id
+      and enrollments.user_id = auth.uid()
+    where topics.id = topic_id
+      and topics.status = 'COMPLETED'
+      and topics.speaker_id <> auth.uid()
+      and enrollments.created_at <= topics.scheduled_at
+  )
+);
 
-create policy "Users update own ratings" on public.ratings
-for update to authenticated using (auth.uid() = user_id) with check (auth.uid() = user_id);
+create policy "Users update own eligible ratings" on public.ratings
+for update to authenticated using (auth.uid() = user_id)
+with check (
+  auth.uid() = user_id
+  and exists (
+    select 1
+    from public.topics
+    join public.enrollments
+      on enrollments.topic_id = topics.id
+      and enrollments.user_id = auth.uid()
+    where topics.id = topic_id
+      and topics.status = 'COMPLETED'
+      and topics.speaker_id <> auth.uid()
+      and enrollments.created_at <= topics.scheduled_at
+  )
+);
