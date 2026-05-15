@@ -13,6 +13,8 @@ export default async function DashboardPage() {
     typeof user.user_metadata?.display_name === "string" && user.user_metadata.display_name.trim()
       ? user.user_metadata.display_name
       : user.email
+  const enrolledUpcoming = dashboard.enrolled.filter((topic) => topic.status === "SCHEDULED")
+  const enrolledPast = dashboard.enrolled.filter((topic) => topic.status === "COMPLETED")
 
   return (
     <PageShell>
@@ -34,9 +36,13 @@ export default async function DashboardPage() {
           {dashboard.speaking.map((topic) => <TopicCard key={topic.id} topic={topic} />)}
           {!dashboard.speaking.length ? <Empty /> : null}
         </Section>
-        <Section title="Enrolled Sessions">
-          {dashboard.enrolled.map((topic) => <TopicCard key={topic.id} topic={topic} />)}
-          {!dashboard.enrolled.length ? <Empty /> : null}
+        <Section title="Enrolled Upcoming Sessions">
+          {enrolledUpcoming.map((topic) => <TopicCard key={topic.id} topic={topic} />)}
+          {!enrolledUpcoming.length ? <Empty /> : null}
+        </Section>
+        <Section title="Enrolled Past Sessions">
+          {enrolledPast.map((topic) => <TopicCard key={topic.id} topic={topic} />)}
+          {!enrolledPast.length ? <Empty /> : null}
         </Section>
         <Section title="Rated Sessions">
           {dashboard.rated.map((rating) => (

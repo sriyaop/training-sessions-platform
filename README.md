@@ -184,6 +184,5 @@ Generated code was linted, built, reviewed, and adjusted against the hackathon r
 
 - Add stronger automated integration tests around lifecycle transitions.
 - Add a calendar-style upcoming sessions view.
-- Add speaker profile summaries.
 - Add safe Markdown rendering for topic descriptions and comments.
-- Add Docker setup for even faster reviewer startup.
+- Add a richer Docker Compose setup that can document the Supabase dependency more explicitly.

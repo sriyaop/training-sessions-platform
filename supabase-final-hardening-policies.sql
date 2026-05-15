@@ -5,6 +5,19 @@ drop policy if exists "Users delete own enrollments" on public.enrollments;
 drop policy if exists "Users create own ratings" on public.ratings;
 drop policy if exists "Users update own ratings" on public.ratings;
 
+alter table public.topics
+drop constraint if exists scheduled_topics_require_session_details;
+
+alter table public.topics
+add constraint scheduled_topics_require_session_details check (
+  status not in ('SCHEDULED', 'COMPLETED')
+  or (
+    scheduled_at is not null
+    and duration_minutes is not null
+    and length(trim(coalesce(location, ''))) > 0
+  )
+);
+
 create policy "Requesters can edit open topics" on public.topics
 for update to authenticated using (auth.uid() = requester_id and status = 'OPEN')
 with check (auth.uid() = requester_id and status = 'OPEN');

@@ -22,6 +22,18 @@ function fail(path: string, message: string): never {
   redirect(`${path}?error=${encodeURIComponent(message)}`)
 }
 
+function parseFutureDateTime(value: string, path: string) {
+  if (!value) fail(path, "Scheduled time is required.")
+
+  const date = new Date(value)
+  const timestamp = date.getTime()
+
+  if (!Number.isFinite(timestamp)) fail(path, "Scheduled time must be a valid date and time.")
+  if (timestamp <= Date.now()) fail(path, "Scheduled time must be in the future.")
+
+  return date
+}
+
 async function getOwnedTopic(id: string) {
   const { supabase, user } = await requireUser()
   await completePastSessions()
@@ -37,12 +49,13 @@ export async function register(formData: FormData) {
   const password = text(formData, "password")
   const displayName = text(formData, "displayName")
 
+  if (!displayName) fail("/register", "Name is required.")
   if (!email || !password) fail("/register", "Email and password are required.")
 
   const { data, error } = await supabase.auth.signUp({
     email,
     password,
-    options: { data: { display_name: displayName || email } },
+    options: { data: { display_name: displayName } },
   })
 
   if (error) {
@@ -60,7 +73,7 @@ export async function register(formData: FormData) {
     await supabase.from("profiles").upsert({
       id: data.user.id,
       email,
-      display_name: displayName || email,
+      display_name: displayName,
     })
   }
 
@@ -214,8 +227,10 @@ export async function scheduleTopic(formData: FormData) {
 
   if (topic.speaker_id !== user.id) fail(path, "Only the speaker can schedule this topic.")
   if (!["CLAIMED", "SCHEDULED"].includes(topic.status)) fail(path, "Claim the topic before scheduling.")
-  if (!scheduledAt || new Date(scheduledAt).getTime() <= Date.now()) fail(path, "Scheduled time must be in the future.")
-  if (durationMinutes !== null && (!Number.isInteger(durationMinutes) || durationMinutes <= 0)) fail(path, "Duration must be positive.")
+  const scheduledDate = parseFutureDateTime(scheduledAt, path)
+  if (durationMinutes === null) fail(path, "Duration is required.")
+  if (!Number.isInteger(durationMinutes) || durationMinutes <= 0) fail(path, "Duration must be a positive integer.")
+  if (!location) fail(path, "Location is required.")
   if (capacity !== null && (!Number.isInteger(capacity) || capacity <= 0)) fail(path, "Capacity must be positive.")
 
   if (capacity !== null) {
@@ -232,9 +247,9 @@ export async function scheduleTopic(formData: FormData) {
   const { error } = await supabase
     .from("topics")
     .update({
-      scheduled_at: new Date(scheduledAt).toISOString(),
+      scheduled_at: scheduledDate.toISOString(),
       duration_minutes: durationMinutes,
-      location: location || null,
+      location,
       capacity,
       status: "SCHEDULED",
     })

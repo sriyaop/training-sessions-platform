@@ -149,10 +149,10 @@ export default async function TopicDetailPage({
                   <input className="mt-1 w-full rounded-md border px-3 py-2" name="scheduledAt" type="datetime-local" required />
                 </label>
                 <div className="grid gap-3 sm:grid-cols-2">
-                  <input className="rounded-md border px-3 py-2 text-sm" name="durationMinutes" type="number" min="1" placeholder="Duration minutes" defaultValue={topic.duration_minutes ?? ""} />
+                  <input className="rounded-md border px-3 py-2 text-sm" name="durationMinutes" type="number" min="1" placeholder="Duration minutes" defaultValue={topic.duration_minutes ?? ""} required />
                   <input className="rounded-md border px-3 py-2 text-sm" name="capacity" type="number" min="1" placeholder="Capacity" defaultValue={topic.capacity ?? ""} />
                 </div>
-                <input className="w-full rounded-md border px-3 py-2 text-sm" name="location" placeholder="Location" defaultValue={topic.location ?? ""} />
+                <input className="w-full rounded-md border px-3 py-2 text-sm" name="location" placeholder="Location" defaultValue={topic.location ?? ""} required />
                 <Button>Schedule</Button>
               </form>
             </section>

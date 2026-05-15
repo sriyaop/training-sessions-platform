@@ -39,7 +39,7 @@ Status values:
 | FR14 | One recommendation per user/topic; submitting again toggles off. | `recommendations` unique constraint, `toggleRecommendation` delete/insert | TESTED | Needs browser toggle test. |
 | FR15 | User cannot recommend own topic. | `src/app/actions.ts::toggleRecommendation`, recommendation RLS policy | TESTED | Needs clear message verification. |
 | FR16 | Recommendation count visible; topics sortable by count. | `src/lib/data.ts::enrichTopics`, `src/components/ui.tsx::TopicCard`, topics sort | TESTED | Needs list and Most Wanted ordering check. |
-| FR17 | Speaker schedules with date/time, duration, location, capacity. | `src/app/topics/[id]/page.tsx`, `src/app/actions.ts::scheduleTopic` | TESTED | Needs schedule form test. |
+| FR17 | Speaker schedules with date/time, duration, location, capacity. | `src/app/topics/[id]/page.tsx`, `src/app/actions.ts::scheduleTopic`, `supabase-schema.sql` | TESTED | Duration and location are required; capacity remains optional. Needs schedule form test. |
 | FR18 | Scheduling transitions to Scheduled and details visible. | `scheduleTopic`, topic detail info grid | TESTED | Needs browser verification. |
 | FR19 | Scheduled-at must be future. | `src/app/actions.ts::scheduleTopic` | TESTED | Needs past date rejection test. |
 | FR20 | Speaker can update Scheduled date/time/location/duration/capacity or cancel. | `scheduleTopic`, `cancelTopic`, scheduled detail form | TESTED | Needs update scheduled session test. |
@@ -58,7 +58,7 @@ Status values:
 | FR33 | Most Wanted shows only Open and Claimed topics sorted by recommendation count descending across the full filtered set before pagination. | `src/app/most-wanted/page.tsx`, `listTopics({ mode: "most-wanted" })` | TESTED | Needs multiple recommended topics to verify ordering. |
 | FR34 | Upcoming shows only Scheduled sessions sorted by scheduled-at ascending, with the soonest future session first. | `src/app/upcoming/page.tsx`, `listTopics({ mode: "upcoming" })` | TESTED | Needs multiple scheduled sessions. |
 | FR35 | Past shows only Completed sessions sorted by scheduled-at descending, with aggregate rating visible when ratings exist. | `src/app/past/page.tsx`, `listTopics({ mode: "past" })` | TESTED | Needs completed sessions with ratings. |
-| FR36 | Dashboard summarizes the signed-in user's requested topics, speaking sessions, enrolled sessions, and rated sessions. | `src/app/dashboard/page.tsx`, `src/lib/data.ts::getDashboard` | TESTED | Needs user-specific dashboard verification. |
+| FR36 | Dashboard summarizes the signed-in user's requested topics, speaking sessions, enrolled upcoming sessions, enrolled past sessions, and rated sessions. | `src/app/dashboard/page.tsx`, `src/lib/data.ts::getDashboard` | TESTED | Needs user-specific dashboard verification. |
 | FR37 | Long list views are paginated with a default page size of 20; filters apply first, sorting applies to the filtered set, and pagination slices the sorted results while preserving selected query parameters. | `Pagination`, `listTopics`, all list pages | TESTED | Needs enough data to test next/previous and parameter preservation. |
 | FR38 | All data persists across restarts. | Supabase Postgres/Auth | TESTED | Stop/start local app and verify existing data remains. |
 | FR39 | Topic title required and non-whitespace. | `createTopic`, `editTopic`, schema check | TESTED | Needs empty/whitespace browser test. |

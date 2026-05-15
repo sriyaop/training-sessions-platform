@@ -21,7 +21,7 @@ export default async function RegisterPage({ searchParams }: { searchParams: Pro
             <ErrorMessage message={error} />
             <label className="block text-sm font-medium">
               Display name
-              <input className="mt-1 w-full rounded-md border px-3 py-2" name="displayName" />
+              <input className="mt-1 w-full rounded-md border px-3 py-2" name="displayName" required />
             </label>
             <label className="block text-sm font-medium">
               Email

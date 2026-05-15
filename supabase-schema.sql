@@ -25,6 +25,14 @@ create table public.topics (
   check (
     (status = 'OPEN' and scheduled_at is null)
     or status in ('CLAIMED', 'SCHEDULED', 'COMPLETED', 'CANCELLED')
+  ),
+  constraint scheduled_topics_require_session_details check (
+    status not in ('SCHEDULED', 'COMPLETED')
+    or (
+      scheduled_at is not null
+      and duration_minutes is not null
+      and length(trim(coalesce(location, ''))) > 0
+    )
   )
 );
 
