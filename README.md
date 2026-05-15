@@ -7,6 +7,7 @@ The project focuses on the required lifecycle and authorization rules over visua
 ## Features
 
 - Email/password registration, login, and logout through Supabase Auth.
+- Optional Google sign-in through Supabase Auth.
 - Topic requests with `OPEN`, `CLAIMED`, `SCHEDULED`, `COMPLETED`, and `CANCELLED` statuses.
 - Recommendation/upvote toggle for topics requested by other users.
 - Volunteer-to-teach flow with claim and unclaim support.
@@ -16,6 +17,7 @@ The project focuses on the required lifecycle and authorization rules over visua
 - Post-session ratings and attributed comments from eligible attendees.
 - Topics list with status/role filters, sorting, and pagination.
 - Most Wanted, Upcoming Sessions, Past Sessions, Topic Detail, and User Dashboard views.
+- Speaker profile pages with completed sessions, average rating, and attendee totals.
 
 ## Tech Stack And Rationale
 
@@ -60,13 +62,25 @@ Fresh reviewers only need `supabase-schema.sql`.
 ```bash
 NEXT_PUBLIC_SUPABASE_URL=your-project-url
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
+NEXT_PUBLIC_SPLINE_SCENE_URL=optional-public-spline-viewer-url
 ```
 
 `.env.example` is committed as a safe template. `.env.local` is intentionally ignored and must not be committed.
 
+`NEXT_PUBLIC_SPLINE_SCENE_URL` is optional. If provided, the auth pages and dashboard render the public Spline scene in a contained visual panel. If omitted, the app falls back to a static panel.
+
 5. For local hackathon testing, either disable email confirmation in Supabase Auth settings or manually confirm test users after registration.
 
-6. Run the app:
+6. Optional Google sign-in:
+
+- Enable Google under `Authentication -> Sign In / Providers` in Supabase.
+- Add this redirect URL in Supabase/Google OAuth settings:
+
+```text
+http://localhost:3000/auth/callback
+```
+
+7. Run the app:
 
 ```bash
 npm run dev
@@ -80,6 +94,7 @@ Open `http://localhost:3000`.
 - `src/lib/data.ts`: read queries, list filtering/sorting/pagination, count enrichment, aggregate ratings, dashboard queries, and lazy session completion.
 - `src/app/actions.ts`: all lifecycle mutations, validation, and server-side authorization checks.
 - `src/app/*/page.tsx`: server-rendered route views and simple form flows.
+- `src/app/speakers/[id]/page.tsx`: speaker profile summary and session history.
 - `src/components/*`: shared navigation, page shell, badges, cards, pagination, and button primitive.
 - `supabase-schema.sql`: database schema, enum, relationships, constraints, triggers, profile creation trigger, and RLS policies.
 - `docs/requirement-checklist.md`: FR/AC verification checklist for final manual QA.
@@ -116,6 +131,15 @@ docs/requirement-checklist.md
 ```
 
 Use at least two test accounts, and preferably three, to verify requester/speaker/attendee/outsider behavior.
+
+## Optional Docker Run
+
+Docker is optional; local Node setup is still the primary path.
+
+```bash
+docker build -t training-sessions-platform .
+docker run --env-file .env.local -p 3000:3000 training-sessions-platform
+```
 
 ## Assumptions
 

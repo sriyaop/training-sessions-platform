@@ -14,6 +14,7 @@ import { ErrorMessage, StatusBadge } from "@/components/ui"
 import { Button } from "@/components/ui/button"
 import { getTopic } from "@/lib/data"
 import { getUser } from "@/lib/supabase/server"
+import Link from "next/link"
 import { redirect } from "next/navigation"
 
 export default async function TopicDetailPage({
@@ -62,7 +63,18 @@ export default async function TopicDetailPage({
           </div>
           <dl className="mt-4 grid gap-3 text-sm sm:grid-cols-2 lg:grid-cols-4">
             <Info label="Requester" value={topic.requester?.display_name || topic.requester?.email || "Unknown"} />
-            <Info label="Speaker" value={topic.speaker?.display_name || topic.speaker?.email || "Not claimed"} />
+            <div className="rounded-md border p-3">
+              <dt className="text-xs uppercase text-muted-foreground">Speaker</dt>
+              <dd className="mt-1 font-medium">
+                {topic.speaker ? (
+                  <Link className="underline-offset-4 hover:underline" href={`/speakers/${topic.speaker.id}`}>
+                    {topic.speaker.display_name || topic.speaker.email}
+                  </Link>
+                ) : (
+                  "Not claimed"
+                )}
+              </dd>
+            </div>
             <Info label="Recommendations" value={String(topic.recommendation_count ?? 0)} />
             <Info label="Enrollment" value={`${topic.enrollment_count ?? 0}${topic.capacity ? ` / ${topic.capacity}` : ""}`} />
             <Info label="Scheduled" value={topic.scheduled_at ? new Date(topic.scheduled_at).toLocaleString() : "Not scheduled"} />

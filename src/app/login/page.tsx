@@ -1,5 +1,6 @@
-import { login } from "@/app/actions"
+import { login, loginWithGoogle } from "@/app/actions"
 import { PageShell } from "@/components/page-shell"
+import { SplineAccent } from "@/components/spline-accent"
 import { ErrorMessage } from "@/components/ui"
 import { Button } from "@/components/ui/button"
 import { getUser } from "@/lib/supabase/server"
@@ -13,23 +14,34 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
 
   return (
     <PageShell>
-      <div className="mx-auto max-w-md rounded-lg border bg-card p-5">
-        <h1 className="text-xl font-semibold">Login</h1>
-        <form action={login} className="mt-4 space-y-3">
-          <ErrorMessage message={error} />
-          <label className="block text-sm font-medium">
-            Email
-            <input className="mt-1 w-full rounded-md border px-3 py-2" name="email" type="email" required />
-          </label>
-          <label className="block text-sm font-medium">
-            Password
-            <input className="mt-1 w-full rounded-md border px-3 py-2" name="password" type="password" required />
-          </label>
-          <Button className="w-full">Login</Button>
-        </form>
-        <p className="mt-3 text-sm text-muted-foreground">
-          Need an account? <Link className="font-medium underline" href="/register">Register</Link>
-        </p>
+      <div className="mx-auto grid w-full max-w-4xl gap-5 lg:grid-cols-[minmax(0,1fr)_360px]">
+        <div className="rounded-lg border bg-card p-5">
+          <h1 className="text-xl font-semibold">Login</h1>
+          <form action={login} className="mt-4 space-y-3">
+            <ErrorMessage message={error} />
+            <label className="block text-sm font-medium">
+              Email
+              <input className="mt-1 w-full rounded-md border px-3 py-2" name="email" type="email" required />
+            </label>
+            <label className="block text-sm font-medium">
+              Password
+              <input className="mt-1 w-full rounded-md border px-3 py-2" name="password" type="password" required />
+            </label>
+            <Button className="w-full">Login</Button>
+          </form>
+          <p className="mt-3 text-sm text-muted-foreground">
+            Need an account? <Link className="font-medium underline" href="/register">Register</Link>
+          </p>
+          <div className="my-4 h-px bg-border" />
+          <form action={loginWithGoogle}>
+            <Button className="w-full" variant="outline">
+              Continue with Google
+            </Button>
+          </form>
+        </div>
+        <div className="hidden lg:block">
+          <SplineAccent title="Training sessions login visual" />
+        </div>
       </div>
     </PageShell>
   )

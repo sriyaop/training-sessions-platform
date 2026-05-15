@@ -1,5 +1,5 @@
 import { createClient } from "@/lib/supabase/server"
-import type { Enrollment, Rating, Topic, TopicStatus } from "@/lib/types"
+import type { Enrollment, Profile, Rating, Topic, TopicStatus } from "@/lib/types"
 
 const topicSelect =
   "*, requester:profiles!topics_requester_id_fkey(id,email,display_name), speaker:profiles!topics_speaker_id_fkey(id,email,display_name)"
@@ -43,7 +43,7 @@ export async function listTopics({
   let query = supabase.from("topics").select(topicSelect, { count: "exact" })
   const needsComputedSort = sort === "recommendations" || mode === "most-wanted"
 
-  if (mode === "most-wanted") query = query.in("status", ["OPEN", "CLAIMED"])
+  if (mode === "most-wanted") query = query.or("status.eq.OPEN,status.eq.CLAIMED")
   else if (mode === "upcoming") query = query.eq("status", "SCHEDULED")
   else if (mode === "past") query = query.eq("status", "COMPLETED")
   else if (status && statuses.includes(status as TopicStatus)) query = query.eq("status", status)
@@ -96,6 +96,44 @@ export async function listTopics({
   }
 
   return { topics, count: count ?? 0, page, pageSize }
+}
+
+export async function getSpeakerProfile(id: string) {
+  await completePastSessions()
+  const supabase = await createClient()
+  const { data: profile, error: profileError } = await supabase
+    .from("profiles")
+    .select("id,email,display_name")
+    .eq("id", id)
+    .single()
+
+  if (profileError) throw new Error("Speaker not found.")
+
+  const { data: sessions, error: sessionsError } = await supabase
+    .from("topics")
+    .select(topicSelect)
+    .eq("speaker_id", id)
+    .order("scheduled_at", { ascending: false, nullsFirst: false })
+
+  if (sessionsError) throw new Error(sessionsError.message)
+
+  const enrichedSessions = await enrichTopics((sessions ?? []) as Topic[], id)
+  const completed = enrichedSessions.filter((topic) => topic.status === "COMPLETED")
+  const totalRatingCount = completed.reduce((sum, topic) => sum + (topic.rating_count ?? 0), 0)
+  const weightedStars = completed.reduce(
+    (sum, topic) => sum + (topic.average_rating ?? 0) * (topic.rating_count ?? 0),
+    0
+  )
+  const attendeeCount = completed.reduce((sum, topic) => sum + (topic.enrollment_count ?? 0), 0)
+
+  return {
+    profile: profile as Profile,
+    sessions: enrichedSessions,
+    completedCount: completed.length,
+    attendeeCount,
+    ratingCount: totalRatingCount,
+    averageRating: totalRatingCount ? weightedStars / totalRatingCount : null,
+  }
 }
 
 export async function getTopic(id: string, userId?: string) {
