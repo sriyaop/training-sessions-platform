@@ -114,6 +114,10 @@ create policy "Requesters and speakers update allowed topics" on public.topics
 for update to authenticated using (auth.uid() = requester_id or auth.uid() = speaker_id)
 with check (auth.uid() = requester_id or auth.uid() = speaker_id);
 
+create policy "Authenticated users can claim open topics" on public.topics
+for update to authenticated using (status = 'OPEN' and speaker_id is null)
+with check (auth.uid() = speaker_id and status = 'CLAIMED');
+
 create policy "Authenticated users can lazily complete past sessions" on public.topics
 for update to authenticated using (status = 'SCHEDULED' and scheduled_at < now())
 with check (status = 'COMPLETED');
