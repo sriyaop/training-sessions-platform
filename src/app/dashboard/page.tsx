@@ -1,4 +1,5 @@
 import { PageShell } from "@/components/page-shell"
+import { SplineAccent } from "@/components/spline-accent"
 import { TopicCard } from "@/components/ui"
 import { getDashboard } from "@/lib/data"
 import { getUser } from "@/lib/supabase/server"
@@ -15,9 +16,14 @@ export default async function DashboardPage() {
 
   return (
     <PageShell>
-      <div>
-        <p className="text-sm text-muted-foreground">Hi {displayName},</p>
-        <h1 className="text-2xl font-semibold">Dashboard</h1>
+      <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_320px]">
+        <div>
+          <p className="text-sm text-muted-foreground">Hi {displayName},</p>
+          <h1 className="text-2xl font-semibold">Dashboard</h1>
+        </div>
+        <div className="hidden lg:block">
+          <SplineAccent title="Training dashboard visual" compact />
+        </div>
       </div>
       <div className="mt-5 grid gap-5 lg:grid-cols-2">
         <Section title="Requested Topics">

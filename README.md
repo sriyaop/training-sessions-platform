@@ -62,9 +62,12 @@ Fresh reviewers only need `supabase-schema.sql`.
 ```bash
 NEXT_PUBLIC_SUPABASE_URL=your-project-url
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
+NEXT_PUBLIC_SPLINE_SCENE_URL=optional-public-spline-viewer-url
 ```
 
 `.env.example` is committed as a safe template. `.env.local` is intentionally ignored and must not be committed.
+
+`NEXT_PUBLIC_SPLINE_SCENE_URL` is optional. If provided, the auth pages and dashboard render the public Spline scene in a contained visual panel. If omitted, the app falls back to a static panel.
 
 5. For local hackathon testing, either disable email confirmation in Supabase Auth settings or manually confirm test users after registration.
 
