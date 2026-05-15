@@ -8,10 +8,17 @@ export default async function DashboardPage() {
   const { user } = await getUser()
   if (!user) redirect("/login")
   const dashboard = await getDashboard(user.id)
+  const displayName =
+    typeof user.user_metadata?.display_name === "string" && user.user_metadata.display_name.trim()
+      ? user.user_metadata.display_name
+      : user.email
 
   return (
     <PageShell>
-      <h1 className="text-2xl font-semibold">Dashboard</h1>
+      <div>
+        <p className="text-sm text-muted-foreground">Hi {displayName},</p>
+        <h1 className="text-2xl font-semibold">Dashboard</h1>
+      </div>
       <div className="mt-5 grid gap-5 lg:grid-cols-2">
         <Section title="Requested Topics">
           {dashboard.requested.map((topic) => <TopicCard key={topic.id} topic={topic} />)}
