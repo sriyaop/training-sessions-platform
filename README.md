@@ -16,6 +16,8 @@ The project focuses on the required lifecycle and authorization rules over visua
 - Post-session ratings and attributed comments from eligible attendees.
 - Topics list with status/role filters, sorting, and pagination.
 - Most Wanted, Upcoming Sessions, Past Sessions, Topic Detail, and User Dashboard views.
+- Optional category tags for topic browsing.
+- Speaker profile pages with completed sessions, average rating, and attendee totals.
 
 ## Tech Stack And Rationale
 
@@ -80,6 +82,7 @@ Open `http://localhost:3000`.
 - `src/lib/data.ts`: read queries, list filtering/sorting/pagination, count enrichment, aggregate ratings, dashboard queries, and lazy session completion.
 - `src/app/actions.ts`: all lifecycle mutations, validation, and server-side authorization checks.
 - `src/app/*/page.tsx`: server-rendered route views and simple form flows.
+- `src/app/speakers/[id]/page.tsx`: speaker profile summary and session history.
 - `src/components/*`: shared navigation, page shell, badges, cards, pagination, and button primitive.
 - `supabase-schema.sql`: database schema, enum, relationships, constraints, triggers, profile creation trigger, and RLS policies.
 - `docs/requirement-checklist.md`: FR/AC verification checklist for final manual QA.
@@ -116,6 +119,15 @@ docs/requirement-checklist.md
 ```
 
 Use at least two test accounts, and preferably three, to verify requester/speaker/attendee/outsider behavior.
+
+## Optional Docker Run
+
+Docker is optional; local Node setup is still the primary path.
+
+```bash
+docker build -t training-sessions-platform .
+docker run --env-file .env.local -p 3000:3000 training-sessions-platform
+```
 
 ## Assumptions
 
