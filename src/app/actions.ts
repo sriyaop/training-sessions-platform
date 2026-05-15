@@ -119,6 +119,9 @@ export async function toggleRecommendation(formData: FormData) {
   const { supabase, user, topic } = await getOwnedTopic(id)
 
   if (topic.requester_id === user.id) fail(path, "You cannot recommend your own topic.")
+  if (!["OPEN", "CLAIMED"].includes(topic.status)) {
+    fail(path, "Recommendations are only allowed before a topic is scheduled.")
+  }
 
   const { data: existing } = await supabase
     .from("recommendations")
@@ -190,6 +193,17 @@ export async function scheduleTopic(formData: FormData) {
   if (durationMinutes !== null && (!Number.isInteger(durationMinutes) || durationMinutes <= 0)) fail(path, "Duration must be positive.")
   if (capacity !== null && (!Number.isInteger(capacity) || capacity <= 0)) fail(path, "Capacity must be positive.")
 
+  if (capacity !== null) {
+    const { count } = await supabase
+      .from("enrollments")
+      .select("id", { count: "exact", head: true })
+      .eq("topic_id", id)
+
+    if ((count ?? 0) > capacity) {
+      fail(path, `Capacity cannot be lower than the current enrollment count of ${count}.`)
+    }
+  }
+
   const { error } = await supabase
     .from("topics")
     .update({
@@ -258,12 +272,18 @@ export async function rateTopic(formData: FormData) {
 
   const { data: enrollment } = await supabase
     .from("enrollments")
-    .select("id")
+    .select("id,created_at")
     .eq("topic_id", id)
     .eq("user_id", user.id)
     .maybeSingle()
 
   if (!enrollment) fail(path, "Only enrolled attendees can rate.")
+  if (
+    topic.scheduled_at &&
+    new Date(enrollment.created_at).getTime() > new Date(topic.scheduled_at).getTime()
+  ) {
+    fail(path, "Only users enrolled before the session started can rate.")
+  }
 
   const { error } = await supabase.from("ratings").upsert({
     topic_id: id,
@@ -283,7 +303,8 @@ export async function cancelTopic(formData: FormData) {
   const path = `/topics/${id}`
   const { supabase, user, topic } = await getOwnedTopic(id)
 
-  const requesterCanCancel = topic.requester_id === user.id && ["OPEN", "CLAIMED"].includes(topic.status)
+  const requesterCanCancel =
+    topic.requester_id === user.id && ["OPEN", "CLAIMED", "SCHEDULED"].includes(topic.status)
   const speakerCanCancel = topic.speaker_id === user.id && topic.status === "SCHEDULED"
 
   if (!requesterCanCancel && !speakerCanCancel) fail(path, "You do not have permission to cancel this topic.")
