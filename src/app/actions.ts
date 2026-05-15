@@ -1,8 +1,8 @@
 "use server"
 
-import { completePastSessions } from "@/lib/data"
+import { categories, completePastSessions } from "@/lib/data"
 import { createClient, requireUser } from "@/lib/supabase/server"
-import type { TopicStatus } from "@/lib/types"
+import type { TopicCategory, TopicStatus } from "@/lib/types"
 import { revalidatePath } from "next/cache"
 import { redirect } from "next/navigation"
 
@@ -89,12 +89,14 @@ export async function createTopic(formData: FormData) {
   const { supabase, user } = await requireUser()
   const title = text(formData, "title")
   const description = text(formData, "description")
+  const category = text(formData, "category")
 
   if (!title) fail("/topics", "Title is required.")
+  if (!categories.includes(category as TopicCategory)) fail("/topics", "Choose a valid topic category.")
 
   const { data, error } = await supabase
     .from("topics")
-    .insert({ title, description, requester_id: user.id, status: "OPEN" })
+    .insert({ title, description, category, requester_id: user.id, status: "OPEN" })
     .select("id")
     .single()
 
@@ -110,12 +112,14 @@ export async function editTopic(formData: FormData) {
   const { supabase, user, topic } = await getOwnedTopic(id)
   const title = text(formData, "title")
   const description = text(formData, "description")
+  const category = text(formData, "category")
 
   if (topic.requester_id !== user.id) fail(path, "Only the requester can edit this topic.")
   if (topic.status !== "OPEN") fail(path, "Topics can only be edited while open.")
   if (!title) fail(path, "Title is required.")
+  if (!categories.includes(category as TopicCategory)) fail(path, "Choose a valid topic category.")
 
-  const { error } = await supabase.from("topics").update({ title, description }).eq("id", id)
+  const { error } = await supabase.from("topics").update({ title, description, category }).eq("id", id)
   if (error) fail(path, error.message)
 
   revalidatePath(path)

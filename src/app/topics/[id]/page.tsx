@@ -12,8 +12,9 @@ import {
 import { PageShell } from "@/components/page-shell"
 import { ErrorMessage, StatusBadge } from "@/components/ui"
 import { Button } from "@/components/ui/button"
-import { getTopic } from "@/lib/data"
+import { categories, getTopic } from "@/lib/data"
 import { getUser } from "@/lib/supabase/server"
+import Link from "next/link"
 import { redirect } from "next/navigation"
 
 export default async function TopicDetailPage({
@@ -62,7 +63,19 @@ export default async function TopicDetailPage({
           </div>
           <dl className="mt-4 grid gap-3 text-sm sm:grid-cols-2 lg:grid-cols-4">
             <Info label="Requester" value={topic.requester?.display_name || topic.requester?.email || "Unknown"} />
-            <Info label="Speaker" value={topic.speaker?.display_name || topic.speaker?.email || "Not claimed"} />
+            <div className="rounded-md border p-3">
+              <dt className="text-xs uppercase text-muted-foreground">Speaker</dt>
+              <dd className="mt-1 font-medium">
+                {topic.speaker ? (
+                  <Link className="underline-offset-4 hover:underline" href={`/speakers/${topic.speaker.id}`}>
+                    {topic.speaker.display_name || topic.speaker.email}
+                  </Link>
+                ) : (
+                  "Not claimed"
+                )}
+              </dd>
+            </div>
+            <Info label="Category" value={topic.category} />
             <Info label="Recommendations" value={String(topic.recommendation_count ?? 0)} />
             <Info label="Enrollment" value={`${topic.enrollment_count ?? 0}${topic.capacity ? ` / ${topic.capacity}` : ""}`} />
             <Info label="Scheduled" value={topic.scheduled_at ? new Date(topic.scheduled_at).toLocaleString() : "Not scheduled"} />
@@ -121,6 +134,11 @@ export default async function TopicDetailPage({
               <form action={editTopic} className="mt-3 space-y-3">
                 <input type="hidden" name="topicId" value={topic.id} />
                 <input className="w-full rounded-md border px-3 py-2 text-sm" name="title" defaultValue={topic.title} required />
+                <select className="w-full rounded-md border px-3 py-2 text-sm" name="category" defaultValue={topic.category}>
+                  {categories.map((category) => (
+                    <option key={category} value={category}>{category}</option>
+                  ))}
+                </select>
                 <textarea className="min-h-28 w-full rounded-md border px-3 py-2 text-sm" name="description" defaultValue={topic.description} />
                 <Button>Save changes</Button>
               </form>

@@ -1,5 +1,5 @@
 import { createClient } from "@/lib/supabase/server"
-import type { Enrollment, Rating, Topic, TopicStatus } from "@/lib/types"
+import type { Enrollment, Profile, Rating, Topic, TopicCategory, TopicStatus } from "@/lib/types"
 
 const topicSelect =
   "*, requester:profiles!topics_requester_id_fkey(id,email,display_name), speaker:profiles!topics_speaker_id_fkey(id,email,display_name)"
@@ -10,6 +10,15 @@ export const statuses: TopicStatus[] = [
   "SCHEDULED",
   "COMPLETED",
   "CANCELLED",
+]
+
+export const categories: TopicCategory[] = [
+  "Engineering",
+  "Product",
+  "Design",
+  "Data",
+  "Leadership",
+  "Process",
 ]
 
 export async function completePastSessions() {
@@ -28,6 +37,7 @@ export async function listTopics({
   pageSize = 10,
   mode,
   role,
+  category,
   userId,
 }: {
   status?: string
@@ -36,6 +46,7 @@ export async function listTopics({
   pageSize?: number
   mode?: "most-wanted" | "upcoming" | "past"
   role?: "requested" | "speaking" | "enrolled"
+  category?: string
   userId?: string
 }) {
   await completePastSessions()
@@ -47,6 +58,8 @@ export async function listTopics({
   else if (mode === "upcoming") query = query.eq("status", "SCHEDULED")
   else if (mode === "past") query = query.eq("status", "COMPLETED")
   else if (status && statuses.includes(status as TopicStatus)) query = query.eq("status", status)
+
+  if (category && categories.includes(category as TopicCategory)) query = query.eq("category", category)
 
   if (role === "requested" && userId) query = query.eq("requester_id", userId)
   if (role === "speaking" && userId) query = query.eq("speaker_id", userId)
@@ -96,6 +109,44 @@ export async function listTopics({
   }
 
   return { topics, count: count ?? 0, page, pageSize }
+}
+
+export async function getSpeakerProfile(id: string) {
+  await completePastSessions()
+  const supabase = await createClient()
+  const { data: profile, error: profileError } = await supabase
+    .from("profiles")
+    .select("id,email,display_name")
+    .eq("id", id)
+    .single()
+
+  if (profileError) throw new Error("Speaker not found.")
+
+  const { data: sessions, error: sessionsError } = await supabase
+    .from("topics")
+    .select(topicSelect)
+    .eq("speaker_id", id)
+    .order("scheduled_at", { ascending: false, nullsFirst: false })
+
+  if (sessionsError) throw new Error(sessionsError.message)
+
+  const enrichedSessions = await enrichTopics((sessions ?? []) as Topic[], id)
+  const completed = enrichedSessions.filter((topic) => topic.status === "COMPLETED")
+  const totalRatingCount = completed.reduce((sum, topic) => sum + (topic.rating_count ?? 0), 0)
+  const weightedStars = completed.reduce(
+    (sum, topic) => sum + (topic.average_rating ?? 0) * (topic.rating_count ?? 0),
+    0
+  )
+  const attendeeCount = completed.reduce((sum, topic) => sum + (topic.enrollment_count ?? 0), 0)
+
+  return {
+    profile: profile as Profile,
+    sessions: enrichedSessions,
+    completedCount: completed.length,
+    attendeeCount,
+    ratingCount: totalRatingCount,
+    averageRating: totalRatingCount ? weightedStars / totalRatingCount : null,
+  }
 }
 
 export async function getTopic(id: string, userId?: string) {
