@@ -44,3 +44,11 @@ export type Rating = {
   updated_at: string
   user?: Profile | null
 }
+
+export type Enrollment = {
+  id: string
+  topic_id: string
+  user_id: string
+  created_at: string
+  user?: Profile | null
+}

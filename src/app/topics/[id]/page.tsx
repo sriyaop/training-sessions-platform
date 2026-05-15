@@ -14,6 +14,7 @@ import { ErrorMessage, StatusBadge } from "@/components/ui"
 import { Button } from "@/components/ui/button"
 import { getTopic } from "@/lib/data"
 import { getUser } from "@/lib/supabase/server"
+import { redirect } from "next/navigation"
 
 export default async function TopicDetailPage({
   params,
@@ -25,12 +26,13 @@ export default async function TopicDetailPage({
   const { id } = await params
   const { error } = await searchParams
   const { user } = await getUser()
-  const { topic, ratings } = await getTopic(id, user?.id)
+  if (!user) redirect("/login")
+  const { topic, ratings, enrollees } = await getTopic(id, user.id)
   const isRequester = user?.id === topic.requester_id
   const isSpeaker = user?.id === topic.speaker_id
   const isTerminal = topic.status === "COMPLETED" || topic.status === "CANCELLED"
   const canEdit = isRequester && topic.status === "OPEN"
-  const canRecommend = user && !isRequester
+  const canRecommend = !isRequester && ["OPEN", "CLAIMED"].includes(topic.status)
   const canClaim = user && topic.status === "OPEN"
   const canUnclaim = isSpeaker && topic.status === "CLAIMED"
   const canSchedule = isSpeaker && (topic.status === "CLAIMED" || topic.status === "SCHEDULED")
@@ -43,7 +45,7 @@ export default async function TopicDetailPage({
   const canRate = user && topic.user_enrolled && topic.status === "COMPLETED" && !isSpeaker
   const canCancel =
     !isTerminal &&
-    ((isRequester && ["OPEN", "CLAIMED"].includes(topic.status)) ||
+    ((isRequester && ["OPEN", "CLAIMED", "SCHEDULED"].includes(topic.status)) ||
       (isSpeaker && topic.status === "SCHEDULED"))
 
   return (
@@ -70,51 +72,47 @@ export default async function TopicDetailPage({
           </dl>
         </section>
 
-        {user ? (
-          <section className="rounded-lg border bg-card p-5">
-            <h2 className="font-semibold">Actions</h2>
-            <div className="mt-3 flex flex-wrap gap-2">
-              {canRecommend ? (
-                <form action={toggleRecommendation}>
-                  <input type="hidden" name="topicId" value={topic.id} />
-                  <Button variant="outline">{topic.user_recommended ? "Remove recommendation" : "Recommend"}</Button>
-                </form>
-              ) : null}
-              {canClaim ? (
-                <form action={claimTopic}>
-                  <input type="hidden" name="topicId" value={topic.id} />
-                  <Button>Volunteer to teach</Button>
-                </form>
-              ) : null}
-              {canUnclaim ? (
-                <form action={unclaimTopic}>
-                  <input type="hidden" name="topicId" value={topic.id} />
-                  <Button variant="outline">Unclaim</Button>
-                </form>
-              ) : null}
-              {canEnroll ? (
-                <form action={enroll}>
-                  <input type="hidden" name="topicId" value={topic.id} />
-                  <Button>Enroll</Button>
-                </form>
-              ) : null}
-              {canUnenroll ? (
-                <form action={unenroll}>
-                  <input type="hidden" name="topicId" value={topic.id} />
-                  <Button variant="outline">Unenroll</Button>
-                </form>
-              ) : null}
-              {canCancel ? (
-                <form action={cancelTopic}>
-                  <input type="hidden" name="topicId" value={topic.id} />
-                  <Button variant="destructive">Cancel</Button>
-                </form>
-              ) : null}
-            </div>
-          </section>
-        ) : (
-          <p className="rounded-lg border p-4 text-sm text-muted-foreground">Log in to recommend, claim, enroll, or rate.</p>
-        )}
+        <section className="rounded-lg border bg-card p-5">
+          <h2 className="font-semibold">Actions</h2>
+          <div className="mt-3 flex flex-wrap gap-2">
+            {canRecommend ? (
+              <form action={toggleRecommendation}>
+                <input type="hidden" name="topicId" value={topic.id} />
+                <Button variant="outline">{topic.user_recommended ? "Remove recommendation" : "Recommend"}</Button>
+              </form>
+            ) : null}
+            {canClaim ? (
+              <form action={claimTopic}>
+                <input type="hidden" name="topicId" value={topic.id} />
+                <Button>Volunteer to teach</Button>
+              </form>
+            ) : null}
+            {canUnclaim ? (
+              <form action={unclaimTopic}>
+                <input type="hidden" name="topicId" value={topic.id} />
+                <Button variant="outline">Unclaim</Button>
+              </form>
+            ) : null}
+            {canEnroll ? (
+              <form action={enroll}>
+                <input type="hidden" name="topicId" value={topic.id} />
+                <Button>Enroll</Button>
+              </form>
+            ) : null}
+            {canUnenroll ? (
+              <form action={unenroll}>
+                <input type="hidden" name="topicId" value={topic.id} />
+                <Button variant="outline">Unenroll</Button>
+              </form>
+            ) : null}
+            {canCancel ? (
+              <form action={cancelTopic}>
+                <input type="hidden" name="topicId" value={topic.id} />
+                <Button variant="destructive">Cancel</Button>
+              </form>
+            ) : null}
+          </div>
+        </section>
 
         <div className="grid gap-5 lg:grid-cols-2">
           {canEdit ? (
@@ -139,8 +137,8 @@ export default async function TopicDetailPage({
                   <input className="mt-1 w-full rounded-md border px-3 py-2" name="scheduledAt" type="datetime-local" required />
                 </label>
                 <div className="grid gap-3 sm:grid-cols-2">
-                  <input className="rounded-md border px-3 py-2 text-sm" name="durationMinutes" type="number" min="1" placeholder="Duration minutes" />
-                  <input className="rounded-md border px-3 py-2 text-sm" name="capacity" type="number" min="1" placeholder="Capacity" />
+                  <input className="rounded-md border px-3 py-2 text-sm" name="durationMinutes" type="number" min="1" placeholder="Duration minutes" defaultValue={topic.duration_minutes ?? ""} />
+                  <input className="rounded-md border px-3 py-2 text-sm" name="capacity" type="number" min="1" placeholder="Capacity" defaultValue={topic.capacity ?? ""} />
                 </div>
                 <input className="w-full rounded-md border px-3 py-2 text-sm" name="location" placeholder="Location" defaultValue={topic.location ?? ""} />
                 <Button>Schedule</Button>
@@ -162,6 +160,18 @@ export default async function TopicDetailPage({
             </section>
           ) : null}
         </div>
+
+        <section className="rounded-lg border bg-card p-5">
+          <h2 className="font-semibold">Enrollees</h2>
+          <div className="mt-3 space-y-2 text-sm">
+            {enrollees.map((enrollment) => (
+              <div key={enrollment.id} className="rounded-md border p-3">
+                {enrollment.user?.display_name || enrollment.user?.email || "Participant"}
+              </div>
+            ))}
+            {!enrollees.length ? <p className="text-muted-foreground">No enrollees yet.</p> : null}
+          </div>
+        </section>
 
         <section className="rounded-lg border bg-card p-5">
           <h2 className="font-semibold">Ratings and Comments</h2>

@@ -2,10 +2,14 @@ import { register } from "@/app/actions"
 import { PageShell } from "@/components/page-shell"
 import { ErrorMessage } from "@/components/ui"
 import { Button } from "@/components/ui/button"
+import { getUser } from "@/lib/supabase/server"
 import Link from "next/link"
+import { redirect } from "next/navigation"
 
 export default async function RegisterPage({ searchParams }: { searchParams: Promise<{ error?: string }> }) {
   const { error } = await searchParams
+  const { user } = await getUser()
+  if (user) redirect("/topics")
 
   return (
     <PageShell>

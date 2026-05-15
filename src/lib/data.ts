@@ -1,5 +1,5 @@
 import { createClient } from "@/lib/supabase/server"
-import type { Rating, Topic, TopicStatus } from "@/lib/types"
+import type { Enrollment, Rating, Topic, TopicStatus } from "@/lib/types"
 
 const topicSelect =
   "*, requester:profiles!topics_requester_id_fkey(id,email,display_name), speaker:profiles!topics_speaker_id_fkey(id,email,display_name)"
@@ -27,6 +27,7 @@ export async function listTopics({
   page = 1,
   pageSize = 10,
   mode,
+  role,
   userId,
 }: {
   status?: string
@@ -34,6 +35,7 @@ export async function listTopics({
   page?: number
   pageSize?: number
   mode?: "most-wanted" | "upcoming" | "past"
+  role?: "requested" | "speaking" | "enrolled"
   userId?: string
 }) {
   await completePastSessions()
@@ -45,6 +47,23 @@ export async function listTopics({
   else if (mode === "upcoming") query = query.eq("status", "SCHEDULED")
   else if (mode === "past") query = query.eq("status", "COMPLETED")
   else if (status && statuses.includes(status as TopicStatus)) query = query.eq("status", status)
+
+  if (role === "requested" && userId) query = query.eq("requester_id", userId)
+  if (role === "speaking" && userId) query = query.eq("speaker_id", userId)
+  if (role === "enrolled" && userId) {
+    const { data: enrolledRows, error: enrolledError } = await supabase
+      .from("enrollments")
+      .select("topic_id")
+      .eq("user_id", userId)
+
+    if (enrolledError) throw new Error(enrolledError.message)
+
+    const enrolledTopicIds = enrolledRows?.map((row) => row.topic_id) ?? []
+    if (!enrolledTopicIds.length) {
+      return { topics: [], count: 0, page, pageSize }
+    }
+    query = query.in("id", enrolledTopicIds)
+  }
 
   if (mode === "past") {
     query = query.order("scheduled_at", { ascending: false, nullsFirst: false })
@@ -92,10 +111,20 @@ export async function getTopic(id: string, userId?: string) {
     .select("*, user:profiles!ratings_user_id_fkey(id,email,display_name)")
     .eq("topic_id", id)
     .order("updated_at", { ascending: false })
+  const { data: enrollees, error: enrolleesError } = await supabase
+    .from("enrollments")
+    .select("*, user:profiles!enrollments_user_id_fkey(id,email,display_name)")
+    .eq("topic_id", id)
+    .order("created_at", { ascending: true })
 
   if (ratingsError) throw new Error(ratingsError.message)
+  if (enrolleesError) throw new Error(enrolleesError.message)
 
-  return { topic, ratings: (ratings ?? []) as Rating[] }
+  return {
+    topic,
+    ratings: (ratings ?? []) as Rating[],
+    enrollees: (enrollees ?? []) as Enrollment[],
+  }
 }
 
 export async function getDashboard(userId: string) {

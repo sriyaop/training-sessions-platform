@@ -2,12 +2,14 @@ import { PageShell } from "@/components/page-shell"
 import { Pagination, TopicCard } from "@/components/ui"
 import { listTopics } from "@/lib/data"
 import { getUser } from "@/lib/supabase/server"
+import { redirect } from "next/navigation"
 
 export default async function MostWantedPage({ searchParams }: { searchParams: Promise<{ page?: string }> }) {
   const params = await searchParams
   const page = Math.max(1, Number(params.page ?? 1))
   const { user } = await getUser()
-  const { topics, count, pageSize } = await listTopics({ mode: "most-wanted", page, userId: user?.id })
+  if (!user) redirect("/login")
+  const { topics, count, pageSize } = await listTopics({ mode: "most-wanted", page, userId: user.id })
 
   return (
     <PageShell>
