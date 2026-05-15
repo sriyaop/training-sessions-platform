@@ -44,7 +44,16 @@ export async function register(formData: FormData) {
     options: { data: { display_name: displayName || email } },
   })
 
-  if (error) fail("/register", error.message.includes("already") ? "Email is already registered." : error.message)
+  if (error) {
+    const message = error.message.toLowerCase()
+    if (message.includes("rate limit")) {
+      fail(
+        "/register",
+        "Supabase email rate limit exceeded. Disable email confirmation for local testing or wait before trying again."
+      )
+    }
+    fail("/register", message.includes("already") ? "Email is already registered." : error.message)
+  }
 
   if (data.user) {
     await supabase.from("profiles").upsert({
