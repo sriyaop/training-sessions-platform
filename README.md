@@ -7,6 +7,7 @@ The project focuses on the required lifecycle and authorization rules over visua
 ## Features
 
 - Email/password registration, login, and logout through Supabase Auth.
+- Optional Google sign-in through Supabase Auth.
 - Topic requests with `OPEN`, `CLAIMED`, `SCHEDULED`, `COMPLETED`, and `CANCELLED` statuses.
 - Recommendation/upvote toggle for topics requested by other users.
 - Volunteer-to-teach flow with claim and unclaim support.
@@ -71,7 +72,16 @@ NEXT_PUBLIC_SPLINE_SCENE_URL=optional-public-spline-viewer-url
 
 5. For local hackathon testing, either disable email confirmation in Supabase Auth settings or manually confirm test users after registration.
 
-6. Run the app:
+6. Optional Google sign-in:
+
+- Enable Google under `Authentication -> Sign In / Providers` in Supabase.
+- Add this redirect URL in Supabase/Google OAuth settings:
+
+```text
+http://localhost:3000/auth/callback
+```
+
+7. Run the app:
 
 ```bash
 npm run dev

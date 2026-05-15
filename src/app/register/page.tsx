@@ -1,4 +1,4 @@
-import { register } from "@/app/actions"
+import { loginWithGoogle, register } from "@/app/actions"
 import { PageShell } from "@/components/page-shell"
 import { SplineAccent } from "@/components/spline-accent"
 import { ErrorMessage } from "@/components/ui"
@@ -36,6 +36,12 @@ export default async function RegisterPage({ searchParams }: { searchParams: Pro
           <p className="mt-3 text-sm text-muted-foreground">
             Already registered? <Link className="font-medium underline" href="/login">Login</Link>
           </p>
+          <div className="my-4 h-px bg-border" />
+          <form action={loginWithGoogle}>
+            <Button className="w-full" variant="outline">
+              Continue with Google
+            </Button>
+          </form>
         </div>
         <div className="hidden lg:block">
           <SplineAccent title="Training sessions registration visual" />

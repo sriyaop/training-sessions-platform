@@ -1,4 +1,4 @@
-import { login } from "@/app/actions"
+import { login, loginWithGoogle } from "@/app/actions"
 import { PageShell } from "@/components/page-shell"
 import { SplineAccent } from "@/components/spline-accent"
 import { ErrorMessage } from "@/components/ui"
@@ -32,6 +32,12 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
           <p className="mt-3 text-sm text-muted-foreground">
             Need an account? <Link className="font-medium underline" href="/register">Register</Link>
           </p>
+          <div className="my-4 h-px bg-border" />
+          <form action={loginWithGoogle}>
+            <Button className="w-full" variant="outline">
+              Continue with Google
+            </Button>
+          </form>
         </div>
         <div className="hidden lg:block">
           <SplineAccent title="Training sessions login visual" />

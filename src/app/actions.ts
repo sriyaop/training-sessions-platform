@@ -3,6 +3,7 @@
 import { categories, completePastSessions } from "@/lib/data"
 import { createClient, requireUser } from "@/lib/supabase/server"
 import type { TopicCategory, TopicStatus } from "@/lib/types"
+import { headers } from "next/headers"
 import { revalidatePath } from "next/cache"
 import { redirect } from "next/navigation"
 
@@ -77,6 +78,21 @@ export async function login(formData: FormData) {
   if (error) fail("/login", "Invalid email or password.")
 
   redirect("/topics")
+}
+
+export async function loginWithGoogle() {
+  const supabase = await createClient()
+  const origin = (await headers()).get("origin") ?? "http://localhost:3000"
+  const { data, error } = await supabase.auth.signInWithOAuth({
+    provider: "google",
+    options: {
+      redirectTo: `${origin}/auth/callback?next=/topics`,
+    },
+  })
+
+  if (error || !data.url) fail("/login", error?.message ?? "Could not start Google sign in.")
+
+  redirect(data.url)
 }
 
 export async function logout() {
